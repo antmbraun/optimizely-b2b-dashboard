@@ -1,5 +1,5 @@
 // src/pages/Home.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import useOptimizelyData from '../hooks/useOptimizelyData';
 import useSearchFilter from '../hooks/useSearchFilter';
@@ -24,6 +24,54 @@ export default function Home() {
   // Track which experiments and experiences are currently being refreshed
   const [refreshingExperiments, setRefreshingExperiments] = useState({});
   const [refreshingExperiences, setRefreshingExperiences] = useState({});
+  // Track last refresh times for each experiment
+  const [lastRefreshTimes, setLastRefreshTimes] = useState({});
+  const [lastGlobalRefresh, setLastGlobalRefresh] = useState(null);
+  const [experimentLastRefreshes, setExperimentLastRefreshes] = useState({});
+  const [campaignLastRefreshes, setCampaignLastRefreshes] = useState({});
+  const [lastDataUpdate, setLastDataUpdate] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    // Get the most recent timestamp from localStorage
+    const experimentTime = localStorage.getItem('experimentDataTime');
+    const campaignTime = localStorage.getItem('campaignDataTime');
+    
+    if (experimentTime || campaignTime) {
+      const times = [experimentTime, campaignTime].filter(Boolean).map(Number);
+      const mostRecent = Math.max(...times);
+      setLastDataUpdate(mostRecent);
+    }
+  }, [experimentsData, campaignsData]);
+
+  const formatLastUpdated = (timestamp) => {
+    if (!timestamp) return 'Never';
+    const date = new Date(timestamp);
+    return date.toLocaleString();
+  };
+
+  const handleRefreshAll = async () => {
+    setIsRefreshing(true);
+    try {
+      // Clear the cache
+      localStorage.removeItem('experimentData');
+      localStorage.removeItem('experimentDataTime');
+      localStorage.removeItem('campaignData');
+      localStorage.removeItem('campaignDataTime');
+
+      // Fetch fresh data
+      const freshExperiments = await fetchExperiments(projectId, apiKey);
+      const freshCampaigns = await fetchCampaigns(projectId, apiKey);
+      
+      setExperiments(freshExperiments);
+      setCampaigns(freshCampaigns);
+      setLastDataUpdate(Date.now());
+    } catch (err) {
+      console.error('Error refreshing data:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Function to refresh a specific experiment
   const handleRefreshExperiment = async (experimentId) => {
@@ -112,7 +160,25 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-white mb-8">Optimizely B2B Dashboard</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-white">Optimizely B2B Dashboard</h1>
+        <div className="flex items-center space-x-4">
+          <div className="text-sm text-gray-400">
+            Last updated: {formatLastUpdated(lastDataUpdate)}
+          </div>
+          <button
+            onClick={handleRefreshAll}
+            disabled={isRefreshing}
+            className={`px-4 py-2 rounded-md text-sm font-medium cursor-pointer ${
+              isRefreshing
+                ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {isRefreshing ? 'Refreshing...' : 'Refresh All Data'}
+          </button>
+        </div>
+      </div>
       <SearchBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
