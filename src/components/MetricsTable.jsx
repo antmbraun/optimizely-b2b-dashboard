@@ -59,8 +59,8 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
     // Calculate confidence level
     const confidence = (1 - pValue) * 100;
     
-    // Determine if significant (p < 0.05)
-    const isSignificant = pValue < 0.05;
+    // Determine if significant (p < 0.15 for 85% confidence)
+    const isSignificant = pValue < 0.15;
     
     return { isSignificant, pValue, confidence };
   };
