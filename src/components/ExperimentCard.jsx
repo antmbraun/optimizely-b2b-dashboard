@@ -118,7 +118,7 @@ export default function ExperimentCard({ experiment, onRefresh, isRefreshing = f
               <>
                 {estimatedTimeRemaining && (
                   <div className="mb-2 flex items-center justify-end space-x-1">
-                    <p className="text-blue-400 font-medium">
+                    <p className="text-blue-400 font-medium text-base">
                       Est. {estimatedTimeRemaining.daysRemaining} days remaining ({estimatedTimeRemaining.completionPercentage}% complete)
                     </p>
                     <div className="group relative">
