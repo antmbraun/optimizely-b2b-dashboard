@@ -143,7 +143,9 @@ export default function ExperimentCard({ experiment, onRefresh, isRefreshing = f
                   </div>
                 )}
                 <p>Started: {startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-                <p>Running for: {durationInDays === 0 ? "<1 day" : `${durationInDays} days`}</p>
+                <p>Running for: {durationInDays === 0 ? "<1 day" : `${durationInDays} days`} 
+                  {durationInDays > 30 ? ' 🔴' : durationInDays > 15 ? ' 🟡' : ' 🟢'}
+                </p>
               </>
             ) : (
               <p className="text-yellow-400">Start date not available</p>
