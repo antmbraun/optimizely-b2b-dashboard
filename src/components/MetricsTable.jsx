@@ -39,11 +39,11 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
                         <div className="flex items-center space-x-1">
                           <span>Conversion Rate</span>
-                          <div className="group relative">
-                            <svg className="h-4 w-4 text-gray-400 cursor-help" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div className="relative inline-block group">
+                            <svg className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <div className="absolute top-0 right-full mr-2 w-72 p-2 bg-gray-800 font-normal text-sm text-gray-200 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[9999] text-left normal-case border border-gray-700 overflow-visible">
+                            <div className="absolute top-0 right-full mr-2 w-72 p-2 bg-gray-800 font-normal text-sm text-gray-200 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999] text-left normal-case border border-gray-700 overflow-visible">
                               <p>From Optimizely</p>
                               <p className="text-xs text-gray-400">The conversion rate for this variation, with the relative difference compared to the baseline shown in parentheses.</p>
                             </div>
@@ -63,11 +63,11 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
                         <div className="flex items-center space-x-1">
                           <span>Our Stat Sig</span>
-                          <div className="group relative">
-                            <svg className="h-4 w-4 text-gray-400 cursor-help" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div className="relative inline-block group">
+                            <svg className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <div className="absolute top-0 right-full mr-2 w-72 p-2 bg-gray-900 text-sm text-gray-300 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 text-left normal-case">
+                            <div className="absolute top-0 right-full mr-2 w-72 p-2 bg-gray-900 text-sm text-gray-300 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-left normal-case">
                               <p className="mb-1">Statistical method:</p>
                               <p className="text-xs text-gray-400 mb-2">Two-tailed z-test with normal approximation</p>
                               <ul className="list-disc list-inside ml-4 text-xs">
