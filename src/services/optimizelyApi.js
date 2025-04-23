@@ -13,7 +13,6 @@ async function fetchOptimizely(endpoint, apiKey) {
     throw new Error('API key is missing. Please log in again.');
   }
 
-  console.log(`Fetching data from: ${BASE_URL}${endpoint}`);
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -35,7 +34,6 @@ export async function fetchExperiments(projectId, apiKey) {
   const cachedTime = localStorage.getItem("experimentDataTime");
 
   if (cachedData && cachedTime && (Date.now() - cachedTime < CACHE_EXPIRATION_TIME)) {
-    console.log('Using cached data for: experimentData');
     return JSON.parse(cachedData);
   }
 
@@ -71,7 +69,7 @@ export async function fetchExperiments(projectId, apiKey) {
     const results = await fetchOptimizely(`/experiments/${experiment.id}/results`, apiKey);
     experiment.metrics = results.metrics;
 
-    // Get shareable link for optimizely results page
+    // Get shareable link for Optimizely results page
     const shareableLink = await fetchOptimizely(`/experiments/${experiment.id}/results/share`, apiKey);
     experiment.shareable_link = shareableLink.url;
 
@@ -95,7 +93,6 @@ export async function fetchCampaigns(projectId, apiKey) {
   const cachedTime = localStorage.getItem("campaignDataTime");
 
   if (cachedData && cachedTime && (Date.now() - cachedTime < CACHE_EXPIRATION_TIME)) {
-    console.log('Using cached data for: campaignData');
     return JSON.parse(cachedData);
   }
 

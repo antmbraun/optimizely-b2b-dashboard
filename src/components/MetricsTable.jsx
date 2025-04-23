@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefreshing = false }) {
+export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefreshing = false, durationInDays }) {
   if (!metrics || metrics.length === 0) {
     return null;
   }
@@ -19,7 +19,7 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
     return 'Not Significant';
   };
 
-  // Calculate statistical significance using chi-square test
+  // Calculate statistical significance using two-tailed z-test with normal approximation
   const calculateStatisticalSignificance = (results) => {
     // Check if results is undefined or null
     if (!results) return { isSignificant: false, pValue: 1, confidence: 0 };
@@ -59,13 +59,14 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
     // Calculate confidence level
     const confidence = (1 - pValue) * 100;
     
-    // Determine if significant (p < 0.05)
-    const isSignificant = pValue < 0.05;
+    // Determine if significant (p < 0.15)
+    const isSignificant = pValue < 0.15;
     
     return { isSignificant, pValue, confidence };
   };
 
-  // Normal cumulative distribution function
+  // Normal cumulative distribution function (CDF) using polynomial approximation
+  // This implementation uses the Abramowitz and Stegun approximation formula
   const normalCDF = (x) => {
     const t = 1 / (1 + 0.2316419 * Math.abs(x));
     const d = 0.3989423 * Math.exp(-x * x / 2);
@@ -77,15 +78,22 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
   };
 
   const getOurSignificanceColor = (pValue) => {
-    if (pValue <= 0.01) return 'text-green-400';
-    if (pValue <= 0.05) return 'text-yellow-400';
+    if (pValue <= 0.05) return 'text-green-400';
+    if (pValue <= 0.15) return 'text-yellow-400';
     return 'text-red-400';
   };
 
   const getOurSignificanceLabel = (pValue) => {
-    if (pValue <= 0.01) return 'Highly Significant';
-    if (pValue <= 0.05) return 'Significant';
+    if (pValue <= 0.05) return 'Highly Significant';
+    if (pValue <= 0.15) return 'Significant';
     return 'Not Significant';
+  };
+
+  // Calculate traffic rate based on total samples and duration
+  const calculateTrafficRate = (results) => {
+    if (!results || !durationInDays || durationInDays === 0) return 0;
+    const totalSamples = Object.values(results).reduce((sum, res) => sum + res.samples, 0);
+    return totalSamples / durationInDays;
   };
 
   return (
@@ -105,26 +113,78 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
               
               {/* Results Table */}
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-700">
+                <table className="w-full divide-y divide-gray-700">
                   <thead>
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Variation</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Samples</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Rate</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Lift</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Optly Stat Sig</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Our Stat Sig</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">Variation</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                        {metric.type === 'personalization' ? 'Sessions & Conversions' : 'Visitors & Conversions'}
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                        <div className="flex items-center space-x-1">
+                          <span>Lift</span>
+                          <div className="group relative">
+                            <svg className="h-4 w-4 text-gray-400 cursor-help" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="absolute top-0 right-full mr-2 w-72 p-2 bg-gray-800 font-normal text-sm text-gray-200 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[9999] text-left normal-case border border-gray-700 overflow-visible">
+                              <p>From Optimizely</p>
+                              <p className="text-xs text-gray-400">The relative difference in conversion rate for this variation, compared to the baseline.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                        <a 
+                          href={shareableLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 transition-colors duration-200"
+                        >
+                          Optly Stat Sig
+                        </a>
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                        <div className="flex items-center space-x-1">
+                          <span>Our Stat Sig</span>
+                          <div className="group relative">
+                            <svg className="h-4 w-4 text-gray-400 cursor-help" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="absolute top-0 right-full mr-2 w-72 p-2 bg-gray-900 text-sm text-gray-300 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 text-left normal-case">
+                              <p className="mb-1">Statistical method:</p>
+                              <p className="text-xs text-gray-400 mb-2">Two-tailed z-test with normal approximation</p>
+                              <ul className="list-disc list-inside ml-4 text-xs">
+                                <li>p &lt;= 0.05: Highly significant (95% confidence)</li>
+                                <li>p &lt;= 0.15: Significant (85% confidence)</li>
+                                <li>p &gt; 0.15: Not significant</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className={`divide-y divide-gray-700 ${isRefreshing ? 'opacity-50' : ''}`}>
-                    {Object.entries(metric.results || {}).map(([variationId, res]) => (
+                    {Object.entries(metric.results || {})
+                      .sort(([, a], [, b]) => {
+                        // Sort baseline first, then alphabetically by name
+                        if (a.is_baseline) return -1;
+                        if (b.is_baseline) return 1;
+                        return (a.name || '').localeCompare(b.name || '');
+                      })
+                      .map(([variationId, res]) => (
                       <tr key={variationId} className="hover:bg-gray-800 transition-colors duration-150">
                         <td className="px-4 py-3 whitespace-nowrap text-gray-300 font-medium">
                           {res.name ? res.name : 'Holdback'}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-gray-300">{res.samples.toLocaleString()}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-gray-300">
-                          {(res.rate * 100).toFixed(2)}%
+                          <div className="flex flex-col">
+                            <span>{res.value.toLocaleString()} conversions</span>
+                            <span className="text-sm text-gray-400">
+                              {res.samples.toLocaleString()} {metric.type === 'personalization' ? 'sessions' : 'visitors'}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-gray-300">
                           {res.lift ? (
@@ -137,15 +197,13 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           {res.lift ? (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex flex-col">
                               <span className={`${getSignificanceColor(res.lift.is_significant, res.lift.lift_status)} font-medium`}>
                                 {getSignificanceLabel(res.lift.is_significant, res.lift.lift_status)}
                               </span>
-                              {res.lift.significance > 0 && (
-                                <span className="text-gray-400 text-sm">
-                                  ({res.lift.significance.toFixed(1)}% confidence)
-                                </span>
-                              )}
+                              <span className="text-sm text-gray-400">
+                                {res.lift.significance === 0 ? '0' : res.lift.significance?.toFixed(1)}% confidence
+                              </span>
                             </div>
                           ) : (
                             <span className="text-gray-400">N/A</span>
@@ -153,12 +211,12 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           {!res.is_baseline ? (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex flex-col">
                               <span className={`${getOurSignificanceColor(statSig.pValue)} font-medium`}>
                                 {getOurSignificanceLabel(statSig.pValue)}
                               </span>
-                              <span className="text-gray-400 text-sm">
-                                (p={statSig.pValue.toFixed(3)})
+                              <span className="text-sm text-gray-400">
+                                p={statSig.pValue.toFixed(3)} ({Math.round((1 - statSig.pValue) * 100)}% confidence)
                               </span>
                             </div>
                           ) : (
