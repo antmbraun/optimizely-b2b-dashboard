@@ -1,4 +1,4 @@
-const BASE_URL = '/api';
+const BASE_URL = import.meta.env.DEV ? '/api' : 'https://api.optimizely.com/v2';
 const CACHE_EXPIRATION_TIME = 24 * 60 * 60 * 1000; // 1 day
 
 /**
