@@ -1,5 +1,6 @@
 import React from 'react';
 import MetricsTable from './MetricsTable';
+import { calculateStatisticalSignificance } from '../utils/statisticalSignificance';
 
 export default function ExperimentCard({ experiment, onRefresh, isRefreshing = false }) {
   // Calculate duration in days with error checking
@@ -63,44 +64,6 @@ export default function ExperimentCard({ experiment, onRefresh, isRefreshing = f
       samplesPerDay,
       isMinimumDuration: finalDaysRemaining === minimumDaysRemaining
     };
-  };
-
-  // Calculate statistical significance using chi-square test
-  const calculateStatisticalSignificance = (results) => {
-    if (!results) return { isSignificant: false, pValue: 1, confidence: 0 };
-    
-    const variations = Object.values(results);
-    if (variations.length < 2) return { isSignificant: false, pValue: 1, confidence: 0 };
-
-    const baseline = variations.find(v => v.is_baseline);
-    const variation = variations.find(v => !v.is_baseline);
-    
-    if (!baseline || !variation) return { isSignificant: false, pValue: 1, confidence: 0 };
-
-    const n1 = baseline.samples;
-    const n2 = variation.samples;
-    const x1 = baseline.value;
-    const x2 = variation.value;
-
-    const p1 = x1 / n1;
-    const p2 = x2 / n2;
-    const pPooled = (x1 + x2) / (n1 + n2);
-    const se = Math.sqrt(pPooled * (1 - pPooled) * (1/n1 + 1/n2));
-    const z = Math.abs(p1 - p2) / se;
-    const pValue = 2 * (1 - normalCDF(z));
-    
-    return { isSignificant: pValue < 0.15, pValue, confidence: (1 - pValue) * 100 };
-  };
-
-  // Normal cumulative distribution function
-  const normalCDF = (x) => {
-    const t = 1 / (1 + 0.2316419 * Math.abs(x));
-    const d = 0.3989423 * Math.exp(-x * x / 2);
-    let prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
-    if (x > 0) {
-      prob = 1 - prob;
-    }
-    return prob;
   };
 
   const estimatedTimeRemaining = calculateEstimatedTimeRemaining();
