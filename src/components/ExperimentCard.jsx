@@ -146,7 +146,6 @@ export default function ExperimentCard({ experiment, onRefresh, isRefreshing = f
           shareableLink={experiment.shareable_link} 
           onRefresh={onRefresh ? () => onRefresh(experiment.id) : undefined}
           isRefreshing={isRefreshing}
-          durationInDays={durationInDays}
         />
       </div>
     </div>

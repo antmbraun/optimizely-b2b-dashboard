@@ -7,7 +7,7 @@ import {
   getOurSignificanceLabel
 } from '../utils/statisticalSignificance';
 
-export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefreshing = false, durationInDays }) {
+export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefreshing = false }) {
   if (!metrics || metrics.length === 0) {
     return null;
   }
