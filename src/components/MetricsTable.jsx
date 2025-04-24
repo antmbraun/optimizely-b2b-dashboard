@@ -1,92 +1,16 @@
 import React from 'react';
+import { 
+  calculateStatisticalSignificance,
+  getSignificanceColor,
+  getSignificanceLabel,
+  getOurSignificanceColor,
+  getOurSignificanceLabel
+} from '../utils/statisticalSignificance';
 
 export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefreshing = false }) {
   if (!metrics || metrics.length === 0) {
     return null;
   }
-
-  const getSignificanceColor = (isSignificant, liftStatus) => {
-    if (isSignificant) {
-      return liftStatus === 'better' ? 'text-green-400' : 'text-red-400';
-    }
-    return 'text-yellow-400';
-  };
-
-  const getSignificanceLabel = (isSignificant, liftStatus) => {
-    if (isSignificant) {
-      return liftStatus === 'better' ? 'Significant Improvement' : 'Significant Decline';
-    }
-    return 'Not Significant';
-  };
-
-  // Calculate statistical significance using chi-square test
-  const calculateStatisticalSignificance = (results) => {
-    // Check if results is undefined or null
-    if (!results) return { isSignificant: false, pValue: 1, confidence: 0 };
-    
-    // Need at least two variations to compare
-    const variations = Object.values(results);
-    if (variations.length < 2) return { isSignificant: false, pValue: 1, confidence: 0 };
-
-    // Find baseline and variation
-    const baseline = variations.find(v => v.is_baseline);
-    const variation = variations.find(v => !v.is_baseline);
-    
-    if (!baseline || !variation) return { isSignificant: false, pValue: 1, confidence: 0 };
-
-    // Extract data
-    const n1 = baseline.samples;
-    const n2 = variation.samples;
-    const x1 = baseline.value;
-    const x2 = variation.value;
-
-    // Calculate proportions
-    const p1 = x1 / n1;
-    const p2 = x2 / n2;
-    
-    // Calculate pooled proportion
-    const pPooled = (x1 + x2) / (n1 + n2);
-    
-    // Calculate standard error
-    const se = Math.sqrt(pPooled * (1 - pPooled) * (1/n1 + 1/n2));
-    
-    // Calculate z-score
-    const z = Math.abs(p1 - p2) / se;
-    
-    // Calculate p-value (two-tailed test)
-    const pValue = 2 * (1 - normalCDF(z));
-    
-    // Calculate confidence level
-    const confidence = (1 - pValue) * 100;
-    
-    // Determine if significant (p < 0.15 for 85% confidence)
-    const isSignificant = pValue < 0.15;
-    
-    return { isSignificant, pValue, confidence };
-  };
-
-  // Normal cumulative distribution function
-  const normalCDF = (x) => {
-    const t = 1 / (1 + 0.2316419 * Math.abs(x));
-    const d = 0.3989423 * Math.exp(-x * x / 2);
-    let prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
-    if (x > 0) {
-      prob = 1 - prob;
-    }
-    return prob;
-  };
-
-  const getOurSignificanceColor = (pValue) => {
-    if (pValue <= 0.01) return 'text-green-400';
-    if (pValue <= 0.05) return 'text-yellow-400';
-    return 'text-red-400';
-  };
-
-  const getOurSignificanceLabel = (pValue) => {
-    if (pValue <= 0.01) return 'Highly Significant';
-    if (pValue <= 0.05) return 'Significant';
-    return 'Not Significant';
-  };
 
   return (
     <section className="mt-6 space-y-6">
@@ -105,47 +29,98 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
               
               {/* Results Table */}
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-700">
+                <table className="w-full divide-y divide-gray-700">
                   <thead>
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Variation</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Samples</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Rate</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Lift</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Optly Stat Sig</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Our Stat Sig</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">Variation</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                        {metric.type === 'personalization' ? 'Sessions & Conversions' : 'Visitors & Conversions'}
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                        <div className="flex items-center space-x-1">
+                          <span>Conversion Rate</span>
+                          <div className="relative inline-block group">
+                            <svg className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="absolute top-0 right-full mr-2 w-72 p-2 bg-gray-800 font-normal text-sm text-gray-200 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999] text-left normal-case border border-gray-700 overflow-visible">
+                              <p>From Optimizely</p>
+                              <p className="text-xs text-gray-400">The conversion rate for this variation, with the relative difference compared to the baseline shown in parentheses.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                        <a 
+                          href={shareableLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 transition-colors duration-200"
+                        >
+                          Optly Stat Sig
+                        </a>
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                        <div className="flex items-center space-x-1">
+                          <span>Our Stat Sig</span>
+                          <div className="relative inline-block group">
+                            <svg className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="absolute top-0 right-full mr-2 w-72 p-2 bg-gray-900 text-sm text-gray-300 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-left normal-case">
+                              <p className="mb-1">Statistical method:</p>
+                              <p className="text-xs text-gray-400 mb-2">Two-tailed z-test with normal approximation</p>
+                              <ul className="list-disc list-inside ml-4 text-xs">
+                                <li>p &lt;= 0.05: Highly significant (95% confidence)</li>
+                                <li>p &lt;= 0.15: Significant (85% confidence)</li>
+                                <li>p &gt; 0.15: Not significant</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className={`divide-y divide-gray-700 ${isRefreshing ? 'opacity-50' : ''}`}>
-                    {Object.entries(metric.results || {}).map(([variationId, res]) => (
+                    {Object.entries(metric.results || {})
+                      .sort(([, a], [, b]) => {
+                        // Sort baseline first, then alphabetically by name
+                        if (a.is_baseline) return -1;
+                        if (b.is_baseline) return 1;
+                        return (a.name || '').localeCompare(b.name || '');
+                      })
+                      .map(([variationId, res]) => (
                       <tr key={variationId} className="hover:bg-gray-800 transition-colors duration-150">
                         <td className="px-4 py-3 whitespace-nowrap text-gray-300 font-medium">
                           {res.name ? res.name : 'Holdback'}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-gray-300">{res.samples.toLocaleString()}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-gray-300">
-                          {(res.rate * 100).toFixed(2)}%
+                          <div className="flex flex-col">
+                            <span>{res.value.toLocaleString()} conversions</span>
+                            <span className="text-sm text-gray-400">
+                              {res.samples.toLocaleString()} {metric.type === 'personalization' ? 'sessions' : 'visitors'}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-gray-300">
-                          {res.lift ? (
-                            <span className={`${res.lift.value > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {res.lift.value > 0 ? '+' : ''}{(res.lift.value * 100).toFixed(2)}%
-                            </span>
-                          ) : (
-                            'N/A'
-                          )}
+                          <div className="flex flex-col">
+                            <span>{((res.value / res.samples) * 100).toFixed(2)}%</span>
+                            {res.lift && (
+                              <span className={`text-sm ${res.lift.value > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                ({res.lift.value > 0 ? '+' : ''}{(res.lift.value * 100).toFixed(2)}% lift)
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           {res.lift ? (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex flex-col">
                               <span className={`${getSignificanceColor(res.lift.is_significant, res.lift.lift_status)} font-medium`}>
                                 {getSignificanceLabel(res.lift.is_significant, res.lift.lift_status)}
                               </span>
-                              {res.lift.significance > 0 && (
-                                <span className="text-gray-400 text-sm">
-                                  ({res.lift.significance.toFixed(1)}% confidence)
-                                </span>
-                              )}
+                              <span className="text-sm text-gray-400">
+                                {res.lift.significance === 0 ? '0' : res.lift.significance?.toFixed(1)}% confidence
+                              </span>
                             </div>
                           ) : (
                             <span className="text-gray-400">N/A</span>
@@ -153,12 +128,12 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           {!res.is_baseline ? (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex flex-col">
                               <span className={`${getOurSignificanceColor(statSig.pValue)} font-medium`}>
                                 {getOurSignificanceLabel(statSig.pValue)}
                               </span>
-                              <span className="text-gray-400 text-sm">
-                                (p={statSig.pValue.toFixed(3)})
+                              <span className="text-sm text-gray-400">
+                                p={statSig.pValue.toFixed(3)} ({Math.round((1 - statSig.pValue) * 100)}% confidence)
                               </span>
                             </div>
                           ) : (

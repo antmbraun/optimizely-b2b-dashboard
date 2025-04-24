@@ -21,6 +21,20 @@ export default function Home() {
     searchQuery
   );
   
+  // Sort experiments by start date (oldest to newest)
+  const sortedExperiments = [...filteredExperiments].sort((a, b) => {
+    const dateA = a.earliest ? new Date(a.earliest) : new Date(0);
+    const dateB = b.earliest ? new Date(b.earliest) : new Date(0);
+    return dateA - dateB;
+  });
+
+  // Sort personalization campaigns by start date (oldest to newest)
+  const sortedPersonalizationCampaigns = [...filteredCampaigns].sort((a, b) => {
+    const dateA = a.earliest ? new Date(a.earliest) : new Date(0);
+    const dateB = b.earliest ? new Date(b.earliest) : new Date(0);
+    return dateA - dateB;
+  });
+
   // Track which experiments and experiences are currently being refreshed
   const [refreshingExperiments, setRefreshingExperiments] = useState({});
   const [refreshingExperiences, setRefreshingExperiences] = useState({});
@@ -189,8 +203,8 @@ export default function Home() {
         <section>
           <h2 className="text-2xl font-bold text-white mb-6">A/B Experiments</h2>
           <div className="grid grid-cols-1 gap-6">
-            {filteredExperiments.length > 0 ? (
-              filteredExperiments.map((experiment) => (
+            {sortedExperiments.length > 0 ? (
+              sortedExperiments.map((experiment) => (
                 <ExperimentCard
                   key={experiment.id}
                   experiment={experiment}
@@ -210,8 +224,8 @@ export default function Home() {
         <section>
           <h2 className="text-2xl font-bold text-white mb-6">Campaigns</h2>
           <div className="grid grid-cols-1 gap-6">
-            {filteredCampaigns.length > 0 ? (
-              filteredCampaigns.map((campaign) => {
+            {sortedPersonalizationCampaigns.length > 0 ? (
+              sortedPersonalizationCampaigns.map((campaign) => {
                 const campaignExperiences = experimentsData?.personalization_campaigns?.filter(
                   (exp) => exp.campaign_id === campaign.id
                 ) || [];

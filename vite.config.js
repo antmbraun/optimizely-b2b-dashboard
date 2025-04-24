@@ -13,5 +13,8 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
+    allowedHosts: [
+      '103d-216-15-11-161.ngrok-free.app'
+    ],
   },
 });
