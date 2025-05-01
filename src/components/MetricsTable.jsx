@@ -91,9 +91,11 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
                       })
                       .map(([variationId, res]) => (
                       <tr key={variationId} className="hover:bg-gray-800 transition-colors duration-150">
+                        {/* Variation */}
                         <td className="px-4 py-3 whitespace-nowrap text-gray-300 font-medium">
                           {res.name ? res.name : 'Holdback'}
                         </td>
+                        {/* Sessions & Conversions */}
                         <td className="px-4 py-3 whitespace-nowrap text-gray-300">
                           <div className="flex flex-col">
                             <span>{res.value.toLocaleString()} conversions</span>
@@ -102,6 +104,7 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
                             </span>
                           </div>
                         </td>
+                        {/* Conversion Rate */}
                         <td className="px-4 py-3 whitespace-nowrap text-gray-300">
                           <div className="flex flex-col">
                             <span>{((res.value / res.samples) * 100).toFixed(2)}%</span>
@@ -112,6 +115,7 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
                             )}
                           </div>
                         </td>
+                        {/* Optimizely Stat Sig */}
                         <td className="px-4 py-3 whitespace-nowrap">
                           {res.lift ? (
                             <div className="flex flex-col">
@@ -119,7 +123,7 @@ export default function MetricsTable({ metrics, shareableLink, onRefresh, isRefr
                                 {getSignificanceLabel(res.lift.is_significant, res.lift.lift_status)}
                               </span>
                               <span className="text-sm text-gray-400">
-                                {res.lift.significance === 0 ? '0' : res.lift.significance?.toFixed(1)}% confidence
+                                {res.lift.significance === 0 ? '0' : (res.lift.significance * 100)?.toFixed(1)}% confidence
                               </span>
                             </div>
                           ) : (
