@@ -38,11 +38,7 @@ export default function Home() {
   // Track which experiments and experiences are currently being refreshed
   const [refreshingExperiments, setRefreshingExperiments] = useState({});
   const [refreshingExperiences, setRefreshingExperiences] = useState({});
-  // Track last refresh times for each experiment
-  const [lastRefreshTimes, setLastRefreshTimes] = useState({});
-  const [lastGlobalRefresh, setLastGlobalRefresh] = useState(null);
-  const [experimentLastRefreshes, setExperimentLastRefreshes] = useState({});
-  const [campaignLastRefreshes, setCampaignLastRefreshes] = useState({});
+  // Track last refresh times 
   const [lastDataUpdate, setLastDataUpdate] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
