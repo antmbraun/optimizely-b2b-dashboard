@@ -109,6 +109,10 @@ export default function Home() {
       
       // Update the state with the modified data
       setExperiments(updatedExperimentsData);
+
+      // Update local storage with the new data
+      localStorage.setItem('experimentData', JSON.stringify(updatedExperimentsData));
+      localStorage.setItem('experimentDataTime', Date.now());
     } catch (error) {
       console.error('Error refreshing experiment:', error);
     } finally {
@@ -137,6 +141,10 @@ export default function Home() {
       
       // Update the state with the modified data
       setExperiments(updatedExperimentsData);
+
+      // Update local storage with the new data
+      localStorage.setItem('experimentData', JSON.stringify(updatedExperimentsData));
+      localStorage.setItem('experimentDataTime', Date.now());
     } catch (error) {
       console.error('Error refreshing campaign experience:', error);
     } finally {
