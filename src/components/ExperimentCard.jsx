@@ -2,7 +2,7 @@ import React from 'react';
 import MetricsTable from './MetricsTable';
 import { calculateStatisticalSignificance } from '../utils/statisticalSignificance';
 
-export default function ExperimentCard({ experiment, onRefresh, isRefreshing = false }) {
+export default function ExperimentCard({ experiment, onRefresh, isRefreshing = false, minimumDuration = 14 }) {
   // Calculate duration in days with error checking
   const startDate = experiment.earliest ? new Date(experiment.earliest) : null;
   const now = new Date();
@@ -30,39 +30,40 @@ export default function ExperimentCard({ experiment, onRefresh, isRefreshing = f
     const statSig = calculateStatisticalSignificance(metric.results);
     const currentPValue = statSig.pValue;
     
-    // If we're already significant, check if we've met the minimum duration
-    if (currentPValue <= 0.15) {
-      const minimumDaysRemaining = Math.max(0, 14 - durationInDays);
-      return { 
-        daysRemaining: minimumDaysRemaining, 
-        completionPercentage: minimumDaysRemaining === 0 ? 100 : Math.round((durationInDays / 14) * 100), 
-        statSig, 
-        totalSamples, 
-        samplesPerDay,
-        isMinimumDuration: minimumDaysRemaining > 0
-      };
+    // Calculate minimum duration remaining
+    const minimumDaysRemaining = Math.max(0, minimumDuration - durationInDays);
+    
+    // Calculate days needed for statistical significance
+    let statSigDaysRemaining = 0;
+    if (currentPValue > 0.15) {
+      const pValueRatio = currentPValue / 0.15;
+      const estimatedAdditionalSamples = Math.ceil(totalSamples * (pValueRatio - 1) * 0.5);
+      statSigDaysRemaining = Math.ceil(estimatedAdditionalSamples / samplesPerDay);
     }
     
-    // Estimate how many more samples we need to reach p < 0.15
-    // This is a simplified calculation - in reality, it's more complex
-    const estimatedAdditionalSamples = Math.ceil((totalSamples * (1 - currentPValue)) / 0.15);
-    const estimatedDaysRemaining = Math.ceil(estimatedAdditionalSamples / samplesPerDay);
+    // If minimum duration is the limiting factor, use that for calculations
+    const isMinimumDurationLimiting = minimumDaysRemaining >= statSigDaysRemaining;
+    const daysRemaining = isMinimumDurationLimiting ? minimumDaysRemaining : statSigDaysRemaining;
     
-    // Calculate completion percentage
-    const totalEstimatedSamples = totalSamples + estimatedAdditionalSamples;
-    const completionPercentage = Math.min(Math.round((totalSamples / totalEstimatedSamples) * 100), 99);
-    
-    // Ensure minimum two-week duration
-    const minimumDaysRemaining = Math.max(0, 14 - durationInDays);
-    const finalDaysRemaining = Math.max(estimatedDaysRemaining, minimumDaysRemaining);
+    // Calculate completion percentage based on the limiting factor
+    let completionPercentage;
+    if (isMinimumDurationLimiting) {
+      // If minimum duration is limiting, base completion on that
+      completionPercentage = Math.min(99, Math.round((durationInDays / minimumDuration) * 100));
+    } else {
+      // If statistical significance is limiting, use the previous calculation
+      const minimumDurationProgress = Math.min(1, durationInDays / minimumDuration) * 0.5;
+      const statSigProgress = Math.max(0, Math.min(1, (1 - currentPValue) / 0.85)) * 0.5;
+      completionPercentage = Math.min(99, Math.round((minimumDurationProgress + statSigProgress) * 100));
+    }
     
     return { 
-      daysRemaining: finalDaysRemaining, 
+      daysRemaining, 
       completionPercentage, 
       statSig, 
       totalSamples, 
       samplesPerDay,
-      isMinimumDuration: finalDaysRemaining === minimumDaysRemaining
+      isMinimumDuration: isMinimumDurationLimiting
     };
   };
 
@@ -91,14 +92,14 @@ export default function ExperimentCard({ experiment, onRefresh, isRefreshing = f
                       <div className="absolute top-0 right-full mr-2 w-64 p-2 bg-gray-900 text-sm text-gray-300 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-left">
                         <p className="font-medium mb-1">Calculation factors</p>
                         <ul className="list-disc list-inside space-y-1">
-                          <li>Minimum duration: 14 days</li>
+                          <li>Minimum duration: {minimumDuration} days</li>
                           <li>Target p-value: 0.15</li>
                           <li>Traffic rate: {Math.round(estimatedTimeRemaining.samplesPerDay).toLocaleString()} visitors/day</li>
                           <li>Est. remaining visitors: {Math.round(estimatedTimeRemaining.samplesPerDay * estimatedTimeRemaining.daysRemaining).toLocaleString()}</li>
                         </ul>
                         <p className="mt-2 text-xs text-gray-400">
                           The completion percentage shows progress toward 85% statistical significance (p &lt; 0.15).
-                          {estimatedTimeRemaining.isMinimumDuration && " This estimate includes the minimum required 14-day duration."} 
+                          {estimatedTimeRemaining.isMinimumDuration && " This estimate includes the minimum required " + minimumDuration + "-day duration."} 
                           {" "}This is a simplified estimate based on current traffic patterns.
                         </p>
                       </div>

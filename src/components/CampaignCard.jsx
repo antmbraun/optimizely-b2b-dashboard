@@ -1,13 +1,18 @@
 import React from 'react';
 import MetricsTable from './MetricsTable';
 
-export default function CampaignCard({ campaign, experiences, onRefresh, refreshingExperiences = {} }) {
+export default function CampaignCard({ campaign, onRefresh, refreshingExperiences = {}, minimumDuration = 14 }) {
+  // Get experiences for this campaign
+  const experiences = campaign.experiences || [];
+
   return (
     <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
       <div className="p-6 space-y-4">
-        <div>
-          <h3 className="text-xl font-semibold text-white">{campaign.name}</h3>
-          <p className="mt-1 text-gray-400">{campaign.description}</p>
+        <div className="flex justify-between items-start">
+          <div className="flex-1 pr-4">
+            <h3 className="text-xl font-semibold text-white">{campaign.name}</h3>
+            <p className="mt-1 text-gray-400">{campaign.description}</p>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -38,6 +43,7 @@ export default function CampaignCard({ campaign, experiences, onRefresh, refresh
                       shareableLink={exp.shareable_link} 
                       onRefresh={onRefresh ? () => onRefresh(exp.experience_id) : undefined}
                       isRefreshing={isRefreshing}
+                      minimumDuration={minimumDuration}
                     />
                   </div>
                 );
