@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
 export const DEFAULT_MINIMUM_DURATION = 14;
-const MIN_ALLOWED_DURATION = 7;  // Minimum 1 week
-const MAX_ALLOWED_DURATION = 90; // Maximum 3 months
 
 export default function Settings({ minimumDuration, onMinimumDurationChange }) {
   const [inputValue, setInputValue] = useState(minimumDuration.toString());
@@ -20,14 +18,12 @@ export default function Settings({ minimumDuration, onMinimumDurationChange }) {
 
   const handleBlur = async () => {
     const numValue = parseInt(inputValue, 10);
-    if (isNaN(numValue)) {
+    if (isNaN(numValue) || numValue <= 0) {
       setInputValue(minimumDuration.toString());
       return;
     }
     
-    // Clamp the value between MIN and MAX
-    const clampedValue = Math.min(Math.max(numValue, MIN_ALLOWED_DURATION), MAX_ALLOWED_DURATION);
-    setInputValue(clampedValue.toString());
+    setInputValue(numValue.toString());
     
     // Show saving state
     setIsSaving(true);
@@ -36,7 +32,7 @@ export default function Settings({ minimumDuration, onMinimumDurationChange }) {
     await new Promise(resolve => setTimeout(resolve, 500));
     
     // Update the value
-    onMinimumDurationChange(clampedValue);
+    onMinimumDurationChange(numValue);
     
     // Hide saving state and show success
     setIsSaving(false);
