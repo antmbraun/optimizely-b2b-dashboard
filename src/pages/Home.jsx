@@ -280,6 +280,14 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* Show EmptyState when no results are found */}
+      {sortedExperiments.length === 0 && sortedPersonalizationCampaigns.length === 0 && (
+        <EmptyState
+          message="No campaigns found"
+          subMessage={searchQuery ? "Try adjusting your search terms" : "No campaigns available"}
+        />
+      )}
     </div>
   );
 }
