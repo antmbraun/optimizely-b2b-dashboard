@@ -10,14 +10,22 @@ import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import { fetchExperiments, fetchCampaigns, getExperimentResults } from '../services/optimizelyApi';
+import Settings, { DEFAULT_MINIMUM_DURATION } from '../components/Settings';
 
 export default function Home() {
   const { projectId, apiKey } = useAuth();
   const { experimentsData, campaignsData, isLoading, error, setExperiments, setCampaigns } = useOptimizelyData();
   const [searchQuery, setSearchQuery] = useState('');
+  const [minimumDuration, setMinimumDuration] = useState(() => {
+    const saved = localStorage.getItem('minimumDuration');
+    const parsed = saved ? parseInt(saved, 10) : DEFAULT_MINIMUM_DURATION;
+    // Validate the saved value is within bounds
+    return Math.min(Math.max(parsed, 7), 90);
+  });
+  const [showSettings, setShowSettings] = useState(false);
   const { filteredExperiments, filteredCampaigns, totalResults } = useSearchFilter(
-    experimentsData,
-    campaignsData,
+    experimentsData || { a_b_tests: [], personalization_campaigns: [] },
+    campaignsData || [],
     searchQuery
   );
   
@@ -53,6 +61,10 @@ export default function Home() {
       setLastDataUpdate(mostRecent);
     }
   }, [experimentsData, campaignsData]);
+
+  useEffect(() => {
+    localStorage.setItem('minimumDuration', minimumDuration.toString());
+  }, [minimumDuration]);
 
   const formatLastUpdated = (timestamp) => {
     if (!timestamp) return 'Never';
@@ -160,7 +172,12 @@ export default function Home() {
 
   // Show error message if there's an error
   if (error) {
-    return <ErrorMessage message={error} />;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-white mb-8">Optimizely B2B Dashboard</h1>
+        <ErrorMessage message={error} />
+      </div>
+    );
   }
 
   // Show empty state if no data is available
@@ -185,6 +202,18 @@ export default function Home() {
             Last updated: {formatLastUpdated(lastDataUpdate)}
           </div>
           <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="px-4 py-2 rounded-md text-sm font-medium bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200"
+          >
+            <div className="flex items-center space-x-2">
+              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>Settings</span>
+            </div>
+          </button>
+          <button
             onClick={handleRefreshAll}
             disabled={isRefreshing}
             className={`px-4 py-2 rounded-md text-sm font-medium cursor-pointer ${
@@ -197,61 +226,68 @@ export default function Home() {
           </button>
         </div>
       </div>
-      <SearchBar
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        totalResults={totalResults}
-      />
 
-      <div className="mt-8 space-y-8">
-        <section>
-          <h2 className="text-2xl font-bold text-white mb-6">A/B Experiments</h2>
-          <div className="grid grid-cols-1 gap-6">
-            {sortedExperiments.length > 0 ? (
-              sortedExperiments.map((experiment) => (
-                <ExperimentCard
-                  key={experiment.id}
-                  experiment={experiment}
-                  onRefresh={handleRefreshExperiment}
-                  isRefreshing={refreshingExperiments[experiment.id] || false}
-                />
-              ))
-            ) : (
-              <EmptyState
-                message="No experiments found"
-                subMessage={searchQuery ? "Try adjusting your search terms" : "No experiments available"}
-              />
-            )}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        <div className={`${showSettings ? 'lg:col-span-3' : 'lg:col-span-4'}`}>
+          <SearchBar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            totalResults={totalResults}
+          />
+        </div>
+        {showSettings && (
+          <div className="lg:col-span-1">
+            <Settings 
+              minimumDuration={minimumDuration}
+              onMinimumDurationChange={setMinimumDuration}
+            />
           </div>
-        </section>
-
-        <section>
-          <h2 className="text-2xl font-bold text-white mb-6">Campaigns</h2>
-          <div className="grid grid-cols-1 gap-6">
-            {sortedPersonalizationCampaigns.length > 0 ? (
-              sortedPersonalizationCampaigns.map((campaign) => {
-                const campaignExperiences = experimentsData?.personalization_campaigns?.filter(
-                  (exp) => exp.campaign_id === campaign.id
-                ) || [];
-                return (
-                  <CampaignCard
-                    key={campaign.id}
-                    campaign={campaign}
-                    experiences={campaignExperiences}
-                    onRefresh={handleRefreshCampaignExperience}
-                    refreshingExperiences={refreshingExperiences}
-                  />
-                );
-              })
-            ) : (
-              <EmptyState
-                message="No campaigns found"
-                subMessage={searchQuery ? "Try adjusting your search terms" : "No campaigns available"}
-              />
-            )}
-          </div>
-        </section>
+        )}
       </div>
+
+      {/* A/B Tests Section */}
+      {sortedExperiments.length > 0 && (
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold text-white mb-6">A/B Tests</h2>
+          <div className="space-y-6">
+            {sortedExperiments.map((experiment) => (
+              <ExperimentCard
+                key={experiment.id}
+                experiment={experiment}
+                onRefresh={handleRefreshExperiment}
+                isRefreshing={refreshingExperiments[experiment.id] || false}
+                minimumDuration={minimumDuration}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Personalization Campaigns Section */}
+      {sortedPersonalizationCampaigns.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold text-white mb-6">Personalization Campaigns</h2>
+          <div className="space-y-6">
+            {sortedPersonalizationCampaigns.map((campaign) => (
+              <CampaignCard
+                key={campaign.id}
+                campaign={campaign}
+                onRefresh={handleRefreshCampaignExperience}
+                refreshingExperiences={refreshingExperiences}
+                minimumDuration={minimumDuration}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Show EmptyState when no results are found */}
+      {sortedExperiments.length === 0 && sortedPersonalizationCampaigns.length === 0 && (
+        <EmptyState
+          message="No campaigns found"
+          subMessage={searchQuery ? "Try adjusting your search terms" : "No campaigns available"}
+        />
+      )}
     </div>
   );
 }
