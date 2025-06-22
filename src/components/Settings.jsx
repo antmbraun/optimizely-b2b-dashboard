@@ -64,7 +64,7 @@ export default function Settings({ minimumDuration, onMinimumDurationChange }) {
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+    <div className="bg-gray-800 rounded-lg shadow-lg p-6 cursor-pointer">
       <h2 className="text-xl font-semibold text-white mb-4">Settings</h2>
       
       <div className="space-y-4">

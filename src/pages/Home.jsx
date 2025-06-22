@@ -5,7 +5,6 @@ import useOptimizelyData from '../hooks/useOptimizelyData';
 import useSearchFilter from '../hooks/useSearchFilter';
 import SearchBar from '../components/SearchBar';
 import ExperimentCard from '../components/ExperimentCard';
-import CampaignCard from '../components/CampaignCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -23,7 +22,7 @@ export default function Home() {
     return Math.min(Math.max(parsed, 7), 90);
   });
   const [showSettings, setShowSettings] = useState(false);
-  const { filteredExperiments, filteredCampaigns, totalResults } = useSearchFilter(
+  const { filteredExperiments, filteredCampaigns, filteredPersonalizationCampaigns, totalResults } = useSearchFilter(
     experimentsData || { a_b_tests: [], personalization_campaigns: [] },
     campaignsData || [],
     searchQuery
@@ -37,7 +36,7 @@ export default function Home() {
   });
 
   // Sort personalization campaigns by start date (oldest to newest)
-  const sortedPersonalizationCampaigns = [...filteredCampaigns].sort((a, b) => {
+  const sortedPersonalizationCampaigns = [...filteredPersonalizationCampaigns].sort((a, b) => {
     const dateA = a.earliest ? new Date(a.earliest) : new Date(0);
     const dateB = b.earliest ? new Date(b.earliest) : new Date(0);
     return dateA - dateB;
@@ -205,7 +204,7 @@ export default function Home() {
             onClick={() => setShowSettings(!showSettings)}
             className="px-4 py-2 rounded-md text-sm font-medium bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200"
           >
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 cursor-pointer">
               <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -268,15 +267,17 @@ export default function Home() {
         <section>
           <h2 className="text-2xl font-bold text-white mb-6">Personalization Campaigns</h2>
           <div className="space-y-6">
-            {sortedPersonalizationCampaigns.map((campaign) => (
-              <CampaignCard
-                key={campaign.id}
-                campaign={campaign}
-                onRefresh={handleRefreshCampaignExperience}
-                refreshingExperiences={refreshingExperiences}
-                minimumDuration={minimumDuration}
-              />
-            ))}
+            {sortedPersonalizationCampaigns.map((campaign) => {
+              return (
+                <ExperimentCard
+                  key={campaign.id}
+                  experiment={campaign}
+                  onRefresh={handleRefreshExperiment}
+                  isRefreshing={refreshingExperiments[campaign.id] || false}
+                  minimumDuration={minimumDuration}
+                />
+              );
+            })}
           </div>
         </section>
       )}
