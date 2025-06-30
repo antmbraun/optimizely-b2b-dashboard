@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MetricsTable from './MetricsTable';
-import { calculateStatisticalSignificance } from '../utils/statisticalSignificance';
+import { calculateStatisticalSignificance, getOurSignificanceColor, getOurSignificanceLabel } from '../utils/statisticalSignificance';
 
 export default function ExperimentCard({ experiment, onRefresh, isRefreshing = false, minimumDuration = 14 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   // Calculate duration in days with error checking
   const startDate = experiment.earliest ? new Date(experiment.earliest) : null;
   const now = new Date();
@@ -69,19 +70,86 @@ export default function ExperimentCard({ experiment, onRefresh, isRefreshing = f
 
   const estimatedTimeRemaining = calculateEstimatedTimeRemaining();
 
+  // Extract key metrics for collapsed view
+  const getCollapsedMetrics = () => {
+    if (!experiment.metrics || experiment.metrics.length === 0) {
+      return { lift: null, statSig: null };
+    }
+
+    const firstMetric = experiment.metrics[0];
+    if (!firstMetric.results) {
+      return { lift: null, statSig: null };
+    }
+
+    // Get the first non-baseline variation for lift
+    const variations = Object.values(firstMetric.results);
+    const testVariation = variations.find(v => !v.is_baseline);
+    const lift = testVariation?.lift?.value || null;
+
+    // Calculate our statistical significance
+    const statSig = calculateStatisticalSignificance(firstMetric.results);
+
+    return { lift, statSig };
+  };
+
+  const { lift, statSig } = getCollapsedMetrics();
+
   return (
-    <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-      <div className="p-6 space-y-4">
+    <div 
+      className="bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-gray-500 transition-all duration-200"
+      onClick={() => setIsExpanded(!isExpanded)}
+    >
+      <div className="p-6">
+        {/* Always visible header */}
         <div className="flex justify-between items-start">
           <div className="flex-1 pr-4">
-            <h3 className="text-xl font-semibold text-white">{experiment.name}</h3>
-            <p className="mt-1 text-gray-400">{experiment.description}</p>
+            <div className="flex items-center space-x-2">
+              <h3 className="text-xl font-semibold text-white">{experiment.name}</h3>
+              <svg 
+                className={`h-5 w-5 text-gray-400 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <p className="mt-1 text-gray-400 max-w-3xl">{experiment.description}</p>
+            
+            {/* Collapsed view metrics */}
+            {!isExpanded && (
+              <div className="mt-3 flex items-center space-x-6 text-sm">
+                {lift !== null && (
+                  <div className="flex items-center space-x-1">
+                    <span className="text-gray-400">Lift:</span>
+                    <span className={`font-medium ${lift > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {lift > 0 ? '+' : ''}{(lift * 100).toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+                {statSig && (
+                  <div className="flex items-center space-x-1">
+                    <span className="text-gray-400">Stat Sig:</span>
+                    <span className={`font-medium ${getOurSignificanceColor(statSig.pValue)}`}>
+                      {getOurSignificanceLabel(statSig.pValue)}
+                    </span>
+                    <span className="text-gray-400">
+                      (p={statSig.pValue.toFixed(3)})
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          <div className="text-sm text-gray-400 text-right w-80">
+
+          {/* Right side info - always visible */}
+          <div className="text-sm text-gray-400 text-right w-80 space-y-2" onClick={(e) => e.stopPropagation()}>
+            {/* Time estimates and dates */}
             {startDate ? (
               <>
                 {estimatedTimeRemaining && (
-                  <div className="mb-2 flex items-center justify-end space-x-1">
+                  <div className="flex items-center justify-end space-x-1">
                     <p className="text-blue-400 font-medium text-base">
                       Est. {estimatedTimeRemaining.daysRemaining} days remaining ({estimatedTimeRemaining.completionPercentage}% complete)
                     </p>
@@ -114,40 +182,21 @@ export default function ExperimentCard({ experiment, onRefresh, isRefreshing = f
             ) : (
               <p className="text-yellow-400">Start date not available</p>
             )}
+
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <a
-            href={`https://app.optimizely.com/v2/projects/${experiment.project_id}/experiments/${experiment.id}/variations`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-col duration-200 text-sm font-medium shadow-sm"
-          >
-            Edit Experiment
-          </a>
-          {experiment.variations.map((variation) => {
-            const previewLink = variation.actions[0]?.share_link;
-            return (
-              <a
-                key={variation.variation_id}
-                href={previewLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 bg-gray-700 text-gray-200 rounded-md hover:bg-gray-600 transition-colors duration-200 text-sm font-medium shadow-sm"
-              >
-                Preview: {variation.name}
-              </a>
-            );
-          })}
-        </div>
-        
-        <MetricsTable 
-          metrics={experiment.metrics} 
-          shareableLink={experiment.shareable_link} 
-          onRefresh={onRefresh ? () => onRefresh(experiment.id) : undefined}
-          isRefreshing={isRefreshing}
-        />
+        {/* Expanded content */}
+        {isExpanded && (
+          <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+            <MetricsTable 
+              metrics={experiment.metrics} 
+              shareableLink={experiment.shareable_link} 
+              onRefresh={onRefresh ? () => onRefresh(experiment.id) : undefined}
+              isRefreshing={isRefreshing}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
