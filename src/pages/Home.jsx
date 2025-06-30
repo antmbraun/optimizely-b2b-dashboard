@@ -193,40 +193,45 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-white">Optimizely B2B Dashboard</h1>
-        <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-400">
+    <div className="container mx-auto px-4 py-6 sm:py-8">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-8 space-y-4 lg:space-y-0">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">Optimizely B2B Dashboard</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+          <div className="text-xs sm:text-sm text-gray-400">
             Last updated: {formatLastUpdated(lastDataUpdate)}
           </div>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="px-4 py-2 rounded-md text-sm font-medium bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200"
-          >
-            <div className="flex items-center space-x-2 cursor-pointer">
-              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span>Settings</span>
-            </div>
-          </button>
-          <button
-            onClick={handleRefreshAll}
-            disabled={isRefreshing}
-            className={`px-4 py-2 rounded-md text-sm font-medium cursor-pointer ${
-              isRefreshing
-                ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {isRefreshing ? 'Refreshing...' : 'Refresh All Data'}
-          </button>
+          <div className="flex items-center space-x-2 sm:space-x-4">
+                         <button
+               onClick={() => setShowSettings(!showSettings)}
+               className="flex items-center justify-center px-3 sm:px-4 rounded-md text-sm font-medium bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200 cursor-pointer"
+               style={{ height: '40px' }}
+             >
+               <div className="flex items-center space-x-2">
+                 <svg className="h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                 </svg>
+                 <span className="hidden sm:inline">Settings</span>
+               </div>
+             </button>
+             <button
+               onClick={handleRefreshAll}
+               disabled={isRefreshing}
+               className={`flex items-center justify-center px-3 sm:px-4 rounded-md text-sm font-medium ${
+                 isRefreshing
+                   ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                   : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+               }`}
+               style={{ height: '40px' }}
+             >
+               <span className="hidden sm:inline">{isRefreshing ? 'Refreshing...' : 'Refresh All Data'}</span>
+               <span className="sm:hidden">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+             </button>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
         <div className={`${showSettings ? 'lg:col-span-3' : 'lg:col-span-4'}`}>
           <SearchBar
             searchQuery={searchQuery}
@@ -246,9 +251,9 @@ export default function Home() {
 
       {/* A/B Tests Section */}
       {sortedExperiments.length > 0 && (
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">A/B Tests</h2>
-          <div className="space-y-6">
+        <section className="mb-8 lg:mb-12">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">A/B Tests</h2>
+          <div className="space-y-4 sm:space-y-6">
             {sortedExperiments.map((experiment) => (
               <ExperimentCard
                 key={experiment.id}
@@ -265,8 +270,8 @@ export default function Home() {
       {/* Personalization Campaigns Section */}
       {sortedPersonalizationCampaigns.length > 0 && (
         <section>
-          <h2 className="text-2xl font-bold text-white mb-6">Personalization Campaigns</h2>
-          <div className="space-y-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Personalization Campaigns</h2>
+          <div className="space-y-4 sm:space-y-6">
             {sortedPersonalizationCampaigns.map((campaign) => {
               return (
                 <ExperimentCard

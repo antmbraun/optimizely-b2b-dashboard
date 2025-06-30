@@ -38,13 +38,13 @@ export default function CampaignCard({ campaign, onRefresh, refreshingExperience
       className="bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-gray-500 transition-all duration-200"
       onClick={() => setIsExpanded(!isExpanded)}
     >
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Header */}
-        <div>
-          <div className="flex justify-between items-start">
-            <div className="flex-1 pr-4">
+        <div className="space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
               <div className="flex items-center space-x-2">
-                <h3 className="text-xl font-semibold text-white">{campaign.name}</h3>
+                <h3 className="text-lg sm:text-xl font-semibold text-white">{campaign.name}</h3>
                 <svg 
                   className={`h-5 w-5 text-gray-400 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
                   xmlns="http://www.w3.org/2000/svg" 
@@ -55,34 +55,34 @@ export default function CampaignCard({ campaign, onRefresh, refreshingExperience
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              <p className="mt-1 text-gray-400 max-w-3xl">{campaign.description}</p>
-              
-              {/* Collapsed view summary */}
-              {!isExpanded && (
-                <div className="mt-3 flex items-center space-x-6 text-sm">
-                  {lift !== null && (
-                    <div className="flex items-center space-x-1">
-                      <span className="text-gray-400">Lift:</span>
-                      <span className={`font-medium ${lift > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {lift > 0 ? '+' : ''}{(lift * 100).toFixed(2)}%
-                      </span>
-                    </div>
-                  )}
-                  {statSig && (
-                    <div className="flex items-center space-x-1">
-                      <span className="text-gray-400">Stat Sig:</span>
-                      <span className={`font-medium ${getOurSignificanceColor(statSig.pValue)}`}>
-                        {getOurSignificanceLabel(statSig.pValue)}
-                      </span>
-                      <span className="text-gray-400">
-                        (p={statSig.pValue.toFixed(3)})
-                      </span>
-                    </div>
-                  )}
+              <p className="mt-1 text-gray-400 max-w-3xl text-sm sm:text-base">{campaign.description}</p>
+            </div>
+          </div>
+          
+          {/* Collapsed view summary */}
+          {!isExpanded && (
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm">
+              {lift !== null && (
+                <div className="flex items-center space-x-1">
+                  <span className="text-gray-400">Lift:</span>
+                  <span className={`font-medium ${lift > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {lift > 0 ? '+' : ''}{(lift * 100).toFixed(2)}%
+                  </span>
+                </div>
+              )}
+              {statSig && (
+                <div className="flex items-center space-x-1">
+                  <span className="text-gray-400">Stat Sig:</span>
+                  <span className={`font-medium ${getOurSignificanceColor(statSig.pValue)}`}>
+                    {getOurSignificanceLabel(statSig.pValue)}
+                  </span>
+                  <span className="text-gray-400">
+                    (p={statSig.pValue.toFixed(3)})
+                  </span>
                 </div>
               )}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Expanded content */}

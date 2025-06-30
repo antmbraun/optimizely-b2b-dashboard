@@ -99,65 +99,82 @@ export default function ExperimentCard({ experiment, onRefresh, isRefreshing = f
       className="bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-gray-500 transition-all duration-200"
       onClick={() => setIsExpanded(!isExpanded)}
     >
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Always visible header */}
-        <div className="flex justify-between items-start">
-          <div className="flex-1 pr-4">
-            <div className="flex items-center space-x-2">
-              <h3 className="text-xl font-semibold text-white">{experiment.name}</h3>
-              <svg 
-                className={`h-5 w-5 text-gray-400 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-            <p className="mt-1 text-gray-400 max-w-3xl">{experiment.description}</p>
-            
-            {/* Collapsed view metrics */}
-            {!isExpanded && (
-              <div className="mt-3 flex items-center space-x-6 text-sm">
-                {lift !== null && (
-                  <div className="flex items-center space-x-1">
-                    <span className="text-gray-400">Lift:</span>
-                    <span className={`font-medium ${lift > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {lift > 0 ? '+' : ''}{(lift * 100).toFixed(2)}%
-                    </span>
-                  </div>
-                )}
-                {statSig && (
-                  <div className="flex items-center space-x-1">
-                    <span className="text-gray-400">Stat Sig:</span>
-                    <span className={`font-medium ${getOurSignificanceColor(statSig.pValue)}`}>
-                      {getOurSignificanceLabel(statSig.pValue)}
-                    </span>
-                    <span className="text-gray-400">
-                      (p={statSig.pValue.toFixed(3)})
-                    </span>
-                  </div>
-                )}
+        <div className="space-y-4">
+          {/* Title and basic info */}
+          <div className="flex items-start justify-between">
+            <div className="flex-1 pr-4">
+              <div className="flex items-center space-x-2">
+                <h3 className="text-lg sm:text-xl font-semibold text-white">{experiment.name}</h3>
+                <svg 
+                  className={`h-5 w-5 text-gray-400 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
-            )}
+              <p className="mt-1 text-gray-400 max-w-3xl text-sm sm:text-base">{experiment.description}</p>
+            </div>
+
+            {/* Time estimates in top right - desktop only */}
+            <div className="hidden lg:block text-sm text-gray-400 text-right" onClick={(e) => e.stopPropagation()}>
+              {startDate ? (
+                <>
+                  {estimatedTimeRemaining && (
+                    <div className="flex items-center justify-end space-x-1">
+                      <p className="text-blue-400 font-medium">
+                        Est. {estimatedTimeRemaining.daysRemaining} days remaining ({estimatedTimeRemaining.completionPercentage}% complete)
+                      </p>
+                      <div className="relative inline-block group">
+                        <svg className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="absolute top-0 right-full mr-2 w-64 p-2 bg-gray-900 text-sm text-gray-300 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-left">
+                          <p className="font-medium mb-1">Calculation factors</p>
+                          <ul className="list-disc list-inside space-y-1">
+                            <li>Minimum duration: {minimumDuration} days</li>
+                            <li>Target p-value: 0.15</li>
+                            <li>Traffic rate: {Math.round(estimatedTimeRemaining.samplesPerDay).toLocaleString()} visitors/day</li>
+                            <li>Est. remaining visitors: {Math.round(estimatedTimeRemaining.samplesPerDay * estimatedTimeRemaining.daysRemaining).toLocaleString()}</li>
+                          </ul>
+                          <p className="mt-2 text-xs text-gray-400">
+                            The completion percentage shows progress toward 85% statistical significance (p &lt; 0.15).
+                            {estimatedTimeRemaining.isMinimumDuration && " This estimate includes the minimum required " + minimumDuration + "-day duration."} 
+                            {" "}This is a simplified estimate based on current traffic patterns.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <p className="mt-1">Started: {startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                  <p>Running for: {durationInDays === 0 ? "<1 day" : `${durationInDays} days`} 
+                    {durationInDays > 30 ? ' 🔴' : durationInDays > 15 ? ' 🟡' : ' 🟢'}
+                  </p>
+                </>
+              ) : (
+                <p className="text-yellow-400">Start date not available</p>
+              )}
+            </div>
           </div>
 
-          {/* Right side info - always visible */}
-          <div className="text-sm text-gray-400 text-right w-80 space-y-2" onClick={(e) => e.stopPropagation()}>
-            {/* Time estimates and dates */}
+          {/* Time estimates on mobile - below description, above metrics */}
+          <div className="lg:hidden text-sm text-gray-400 space-y-1" onClick={(e) => e.stopPropagation()}>
             {startDate ? (
               <>
                 {estimatedTimeRemaining && (
-                  <div className="flex items-center justify-end space-x-1">
-                    <p className="text-blue-400 font-medium text-base">
+                  <div className="flex items-start space-x-1">
+                    <p className="text-blue-400 font-medium">
                       Est. {estimatedTimeRemaining.daysRemaining} days remaining ({estimatedTimeRemaining.completionPercentage}% complete)
                     </p>
                     <div className="relative inline-block group">
-                      <svg className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-300 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <div className="absolute top-0 right-full mr-2 w-64 p-2 bg-gray-900 text-sm text-gray-300 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-left">
+                      <div className="absolute top-0 left-full ml-2 w-64 p-2 bg-gray-900 text-sm text-gray-300 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-left">
                         <p className="font-medium mb-1">Calculation factors</p>
                         <ul className="list-disc list-inside space-y-1">
                           <li>Minimum duration: {minimumDuration} days</li>
@@ -183,6 +200,31 @@ export default function ExperimentCard({ experiment, onRefresh, isRefreshing = f
               <p className="text-yellow-400">Start date not available</p>
             )}
           </div>
+
+          {/* Collapsed view metrics */}
+          {!isExpanded && (
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm">
+              {lift !== null && (
+                <div className="flex items-center space-x-1">
+                  <span className="text-gray-400">Lift:</span>
+                  <span className={`font-medium ${lift > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {lift > 0 ? '+' : ''}{(lift * 100).toFixed(2)}%
+                  </span>
+                </div>
+              )}
+              {statSig && (
+                <div className="flex items-center space-x-1">
+                  <span className="text-gray-400">Stat Sig:</span>
+                  <span className={`font-medium ${getOurSignificanceColor(statSig.pValue)}`}>
+                    {getOurSignificanceLabel(statSig.pValue)}
+                  </span>
+                  <span className="text-gray-400">
+                    (p={statSig.pValue.toFixed(3)})
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Expanded content */}
