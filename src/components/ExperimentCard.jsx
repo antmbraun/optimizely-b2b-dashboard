@@ -182,7 +182,6 @@ export default function ExperimentCard({ experiment, onRefresh, isRefreshing = f
             ) : (
               <p className="text-yellow-400">Start date not available</p>
             )}
-
           </div>
         </div>
 
